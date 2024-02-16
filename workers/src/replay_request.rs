@@ -13,7 +13,7 @@ use reqwest::Url;
 use std::{
     collections::HashMap,
     net::{IpAddr, Ipv4Addr, SocketAddr},
-    path::PathBuf,
+    path::{Path, PathBuf},
     str::FromStr,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -376,26 +376,30 @@ impl ReplayServiceImpl {
             let snapshot_filepath = snapshot_folder.join(snapshot.filename);
 
             // TODO (LB): check here to see if already downloaded
-            info!("downloading snapshot to {:?}", snapshot_filepath);
-            if let Err(e) = download_and_save_file(
-                Url::from_str(&snapshot.url).unwrap(),
-                snapshot_filepath.as_os_str().to_str().unwrap(),
-                exit.clone(),
-            )
-            .await
-            {
-                error!("sending done event to main thread. download error: {:?}", e);
-                let _ = event_sender
-                    .send(Event::Stopped {
-                        workspace_id,
-                        error: Some(ReplayError::Download(e.to_string())),
-                    })
-                    .await;
-                // TODO (LB): return an error here with server_handle to shut it down?
-                return Ok(ReplayBackgroundThreadContext {
-                    handle: server_handle,
-                    snapshot_load_thread: None,
-                });
+            if !Path::new(&snapshot_filepath).exists() {
+                info!("downloading snapshot to {:?}", snapshot_filepath);
+                if let Err(e) = download_and_save_file(
+                    Url::from_str(&snapshot.url).unwrap(),
+                    snapshot_filepath.as_os_str().to_str().unwrap(),
+                    exit.clone(),
+                )
+                .await
+                {
+                    error!("sending done event to main thread. download error: {:?}", e);
+                    let _ = event_sender
+                        .send(Event::Stopped {
+                            workspace_id,
+                            error: Some(ReplayError::Download(e.to_string())),
+                        })
+                        .await;
+                    // TODO (LB): return an error here with server_handle to shut it down?
+                    return Ok(ReplayBackgroundThreadContext {
+                        handle: server_handle,
+                        snapshot_load_thread: None,
+                    });
+                }
+            } else {
+                info!("snapshot existed at {:?}", snapshot_filepath);
             }
 
             let snapshot_load_thread = {

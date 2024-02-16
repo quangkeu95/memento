@@ -29,7 +29,7 @@ use tokio_retry::{
     Retry,
 };
 use tonic::{transport::Channel, Code};
-use tracing::{instrument, warn};
+use tracing::{info, instrument, warn};
 
 #[derive(Debug, Error)]
 pub enum BackfillError {
@@ -272,6 +272,8 @@ pub async fn find_slots_to_backfill(
         .into_iter()
         .map(|snap| snap.slot)
         .collect();
+
+    // info!("snapshot slots available {:#?}", snapshot_slots_available);
     backfill_config
         .slots
         .iter()
