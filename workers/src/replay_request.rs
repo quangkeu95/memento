@@ -375,7 +375,6 @@ impl ReplayServiceImpl {
 
             let snapshot_filepath = snapshot_folder.join(snapshot.filename);
 
-            // TODO (LB): check here to see if already downloaded
             if !Path::new(&snapshot_filepath).exists() {
                 info!("downloading snapshot to {:?}", snapshot_filepath);
                 if let Err(e) = download_and_save_file(

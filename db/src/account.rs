@@ -43,7 +43,7 @@ impl AccountsTable {
             rent_epoch    Int64,
             data          String,
             seq           Int64
-            ) ENGINE = MergeTree()
+            ) ENGINE = ReplacingMergeTree()
             ORDER BY (snapshot_slot, pubkey)
             PRIMARY KEY (snapshot_slot, pubkey);
             ",
